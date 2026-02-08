@@ -90,17 +90,23 @@ export const COMMENTARY_SOURCES = [
 
 // Attempt to load bundled ASV data — falls back to API fetch
 let asvData = null;
+let loadAttempted = false;
 
 export async function loadBibleData() {
   if (asvData) return asvData;
+  if (loadAttempted) return null;
+  loadAttempted = true;
   try {
-    const module = await import('./asv.json');
-    asvData = module.default;
-    return asvData;
+    const res = await fetch('/asv.json');
+    if (res.ok) {
+      asvData = await res.json();
+      return asvData;
+    }
   } catch {
-    console.log('ASV data not bundled — will fetch from API');
-    return null;
+    // File not available — that's fine, we'll use the API
   }
+  console.log('ASV data not bundled — fetching from bible-api.com');
+  return null;
 }
 
 // Fetch verses from bundled data or bible-api.com
